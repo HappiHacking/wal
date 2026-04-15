@@ -1,0 +1,11 @@
+{application, wal, [
+    {description, "Write-Ahead Log for file-backed data stores"},
+    {vsn, "0.1.0"},
+    {registered, [wal_writer]},
+    {mod, {wal_app, []}},
+    {applications, [kernel, stdlib]},
+    {env, [
+        {wal_dir, "/data/aurora/wal"}
+    ]},
+    {modules, [wal, wal_app, wal_sup, wal_entry, wal_writer, wal_replayer]}
+]}.
