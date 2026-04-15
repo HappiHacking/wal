@@ -46,13 +46,17 @@ latest_per_path(Entries) ->
 
 apply_entry(DataDir, #wal_entry{op = write, path = Path, content = Content}) ->
     FullPath = filename:join(DataDir, Path),
-    ok = filelib:ensure_dir(FullPath),
-    file:write_file(FullPath, Content);
+    case filelib:ensure_dir(FullPath) of
+        ok -> file:write_file(FullPath, Content);
+        {error, _} = Err -> Err
+    end;
 
 apply_entry(DataDir, #wal_entry{op = append, path = Path, content = Content}) ->
     FullPath = filename:join(DataDir, Path),
-    ok = filelib:ensure_dir(FullPath),
-    file:write_file(FullPath, Content, [append]);
+    case filelib:ensure_dir(FullPath) of
+        ok -> file:write_file(FullPath, Content, [append]);
+        {error, _} = Err -> Err
+    end;
 
 apply_entry(DataDir, #wal_entry{op = delete, path = Path}) ->
     FullPath = filename:join(DataDir, Path),
