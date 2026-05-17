@@ -8,14 +8,23 @@
 
 -include("wal.hrl").
 
--export([replay/1]).
+-export([replay/1, replay/2]).
 
-%% @doc Replay all uncommitted WAL entries to DataDir.
-%%      Returns {ok, Count} where Count is the number of entries replayed.
+-type server_ref() :: atom() | pid() | {atom(), node()}
+                    | {global, term()} | {via, atom(), term()}.
+
+%% @doc Replay all uncommitted WAL entries from the legacy global writer
+%%      to DataDir. Returns {ok, Count}.
 -spec replay(binary()) -> {ok, non_neg_integer()} | {error, term()}.
 replay(DataDir) ->
-    Entries = wal_writer:pending(),
-    %% Group by path, keeping only the latest entry per path
+    replay(wal_writer, DataDir).
+
+%% @doc Replay uncommitted entries from a specific writer instance to
+%%      DataDir. Used when multiple writers run side by side
+%%      (AUR-1354-h.2: one writer per user).
+-spec replay(server_ref(), binary()) -> {ok, non_neg_integer()} | {error, term()}.
+replay(ServerRef, DataDir) ->
+    Entries = wal_writer:pending(ServerRef),
     Latest = latest_per_path(Entries),
     Count = maps:fold(fun(_Path, Entry, Acc) ->
         case apply_entry(DataDir, Entry) of
